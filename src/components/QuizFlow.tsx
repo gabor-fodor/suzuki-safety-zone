@@ -3,6 +3,17 @@ import { motion, AnimatePresence } from "framer-motion";
 import { quizQuestions } from "@/data/quizData";
 import { X, ArrowRight, CheckCircle2, XCircle, RotateCcw } from "lucide-react";
 
+import quizImg1 from "@/assets/quiz-1-parking.jpg";
+import quizImg2 from "@/assets/quiz-2-phone.jpg";
+import quizImg3 from "@/assets/quiz-3-cyclist.jpg";
+import quizImg4 from "@/assets/quiz-4-wet-road.jpg";
+import quizImg5 from "@/assets/quiz-5-school.jpg";
+import quizImg6 from "@/assets/quiz-6-scooter.jpg";
+import quizImg7 from "@/assets/quiz-7-traffic.jpg";
+import quizImg8 from "@/assets/quiz-8-night.jpg";
+
+const quizImages = [quizImg1, quizImg2, quizImg3, quizImg4, quizImg5, quizImg6, quizImg7, quizImg8];
+
 interface QuizFlowProps {
   onClose: () => void;
 }
@@ -117,10 +128,11 @@ const QuizFlow = ({ onClose }: QuizFlowProps) => {
                 <h3 className="text-xl font-bold mb-2">{question.title}</h3>
                 <p className="text-muted-foreground text-sm mb-6 leading-relaxed">{question.description}</p>
 
-                {/* Placeholder image */}
-                <div className="w-full h-40 bg-secondary rounded-xl mb-6 flex items-center justify-center">
-                  <span className="text-muted-foreground text-sm">Illusztráció</span>
-                </div>
+                <img
+                  src={quizImages[currentQ]}
+                  alt={question.title}
+                  className="w-full h-40 object-cover rounded-xl mb-6"
+                />
 
                 {/* Slider */}
                 <div className="mb-4">
