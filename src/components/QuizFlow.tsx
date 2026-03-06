@@ -142,7 +142,32 @@ const QuizFlow = ({ onClose }: QuizFlowProps) => {
                     <span>{question.max} {question.unit}</span>
                   </div>
 
-                  {/* Slider with badge */}
+                  {/* Safe/Danger badge above slider */}
+                  <div className="relative h-8 mb-1">
+                    {(() => {
+                      const ratio = (sliderValue - question.min) / (question.max - question.min);
+                      const pct = ratio * 100;
+                      const isCurrentSafe = sliderValue >= question.correctValue;
+                      return (
+                        <div
+                          className="absolute bottom-0 transition-all duration-150 pointer-events-none whitespace-nowrap"
+                          style={{ left: `calc(${pct}% + ${(0.5 - ratio) * 28}px)`, transform: 'translateX(-50%)' }}
+                        >
+                          <span
+                            className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full ${
+                              isCurrentSafe
+                                ? "bg-safe/20 text-safe"
+                                : "bg-danger/20 text-danger"
+                            }`}
+                          >
+                            {isCurrentSafe ? "✓ Safe" : "✗ Danger"}
+                          </span>
+                        </div>
+                      );
+                    })()}
+                  </div>
+
+                  {/* Slider */}
                   <div className="relative">
                     <input
                       type="range"
@@ -160,7 +185,6 @@ const QuizFlow = ({ onClose }: QuizFlowProps) => {
                       {(() => {
                         const safeRatio = (question.correctValue - question.min) / (question.max - question.min);
                         const safePct = safeRatio * 100;
-                        // Generate 4-5 tick marks spread across the range
                         const ticks = [];
                         const numTicks = 5;
                         for (let i = 0; i <= numTicks; i++) {
@@ -173,7 +197,6 @@ const QuizFlow = ({ onClose }: QuizFlowProps) => {
                             />
                           );
                         }
-                        // Special tick at the correct value
                         ticks.push(
                           <div
                             key="safe-tick"
@@ -184,29 +207,6 @@ const QuizFlow = ({ onClose }: QuizFlowProps) => {
                         return ticks;
                       })()}
                     </div>
-
-                    {/* Safe/Danger badge floating near thumb */}
-                    {(() => {
-                      const ratio = (sliderValue - question.min) / (question.max - question.min);
-                      const pct = ratio * 100;
-                      const isCurrentSafe = sliderValue >= question.correctValue;
-                      return (
-                        <div
-                          className="absolute -top-8 transition-all duration-150 pointer-events-none"
-                          style={{ left: `${pct}%`, transform: 'translateX(-50%)' }}
-                        >
-                          <span
-                            className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
-                              isCurrentSafe
-                                ? "bg-safe/20 text-safe"
-                                : "bg-danger/20 text-danger"
-                            }`}
-                          >
-                            {isCurrentSafe ? "Safe" : "Danger"}
-                          </span>
-                        </div>
-                      );
-                    })()}
                   </div>
                 </div>
 
