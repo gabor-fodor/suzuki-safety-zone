@@ -1,30 +1,28 @@
 import { motion } from "framer-motion";
 import { Car, Gift, Star } from "lucide-react";
+import { prizesData } from "@/data/quizData";
 
-const prizes = [
+const tiers = [
   {
     icon: Car,
-    tier: "Fődíj",
-    title: "Suzuki élményvezetés",
-    description: "Egy felejthetetlen nap a Suzuki tesztpályán, profi instruktor mellett.",
+    tier: "Főnyeremény",
+    items: prizesData.grand,
     color: "text-accent",
     bg: "bg-accent/10",
     border: "border-accent/20",
   },
   {
     icon: Gift,
-    tier: "2. szint",
-    title: "Értékes utalványok",
-    description: "Üzemanyag- és szervizutalványok 10 000 – 50 000 Ft értékben.",
+    tier: "Középkategória",
+    items: prizesData.mid,
     color: "text-primary",
     bg: "bg-primary/10",
     border: "border-primary/20",
   },
   {
     icon: Star,
-    tier: "3. szint",
-    title: "Suzuki ajándékok",
-    description: "Exkluzív Suzuki merch: hátizsák, sapka, kulcstartó és más kiegészítők.",
+    tier: "Kisebb nyeremények",
+    items: prizesData.small,
     color: "text-safe",
     bg: "bg-safe/10",
     border: "border-safe/20",
@@ -46,23 +44,29 @@ const PrizesSection = () => {
         </motion.div>
 
         <div className="grid md:grid-cols-3 gap-6">
-          {prizes.map((prize, i) => (
+          {tiers.map((tier, i) => (
             <motion.div
-              key={prize.tier}
+              key={tier.tier}
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.15 }}
-              className={`rounded-2xl border ${prize.border} ${prize.bg} p-6 text-center`}
+              className={`rounded-2xl border ${tier.border} ${tier.bg} p-6`}
             >
-              <div className={`w-14 h-14 rounded-xl ${prize.bg} flex items-center justify-center mx-auto mb-4`}>
-                <prize.icon className={`w-7 h-7 ${prize.color}`} />
+              <div className={`w-14 h-14 rounded-xl ${tier.bg} flex items-center justify-center mx-auto mb-4`}>
+                <tier.icon className={`w-7 h-7 ${tier.color}`} />
               </div>
-              <span className={`text-xs font-semibold uppercase tracking-wider ${prize.color}`}>
-                {prize.tier}
-              </span>
-              <h3 className="text-xl font-bold mt-2 mb-2">{prize.title}</h3>
-              <p className="text-muted-foreground text-sm">{prize.description}</p>
+              <h3 className={`text-center text-xs font-semibold uppercase tracking-wider ${tier.color} mb-3`}>
+                {tier.tier}
+              </h3>
+              <ul className="space-y-2">
+                {tier.items.map((item, j) => (
+                  <li key={j} className="text-sm text-muted-foreground flex items-start gap-2">
+                    <span className={`mt-1.5 w-1.5 h-1.5 rounded-full shrink-0 ${tier.color === "text-accent" ? "bg-accent" : tier.color === "text-primary" ? "bg-primary" : "bg-safe"}`} />
+                    {item}
+                  </li>
+                ))}
+              </ul>
             </motion.div>
           ))}
         </div>
