@@ -141,16 +141,73 @@ const QuizFlow = ({ onClose }: QuizFlowProps) => {
                     <span className="font-bold text-foreground text-lg">{sliderValue} {question.unit}</span>
                     <span>{question.max} {question.unit}</span>
                   </div>
-                  <input
-                    type="range"
-                    className="quiz-slider w-full"
-                    min={question.min}
-                    max={question.max}
-                    step={question.step}
-                    value={sliderValue}
-                    onChange={(e) => setSliderValue(parseFloat(e.target.value))}
-                    style={{ background: getSliderGradient(question, sliderValue) }}
-                  />
+
+                  {/* Slider with badge */}
+                  <div className="relative">
+                    <input
+                      type="range"
+                      className="quiz-slider w-full"
+                      min={question.min}
+                      max={question.max}
+                      step={question.step}
+                      value={sliderValue}
+                      onChange={(e) => setSliderValue(parseFloat(e.target.value))}
+                      style={{ background: getSliderGradient(question, sliderValue) }}
+                    />
+
+                    {/* Tick markers */}
+                    <div className="relative w-full h-4 mt-1">
+                      {(() => {
+                        const safeRatio = (question.correctValue - question.min) / (question.max - question.min);
+                        const safePct = safeRatio * 100;
+                        // Generate 4-5 tick marks spread across the range
+                        const ticks = [];
+                        const numTicks = 5;
+                        for (let i = 0; i <= numTicks; i++) {
+                          const pct = (i / numTicks) * 100;
+                          ticks.push(
+                            <div
+                              key={i}
+                              className="absolute top-0 w-px h-2.5 bg-muted-foreground/30"
+                              style={{ left: `${pct}%` }}
+                            />
+                          );
+                        }
+                        // Special tick at the correct value
+                        ticks.push(
+                          <div
+                            key="safe-tick"
+                            className="absolute top-0 w-0.5 h-3.5 bg-safe rounded-full"
+                            style={{ left: `${safePct}%` }}
+                          />
+                        );
+                        return ticks;
+                      })()}
+                    </div>
+
+                    {/* Safe/Danger badge floating near thumb */}
+                    {(() => {
+                      const ratio = (sliderValue - question.min) / (question.max - question.min);
+                      const pct = ratio * 100;
+                      const isCurrentSafe = sliderValue >= question.correctValue;
+                      return (
+                        <div
+                          className="absolute -top-8 transition-all duration-150 pointer-events-none"
+                          style={{ left: `${pct}%`, transform: 'translateX(-50%)' }}
+                        >
+                          <span
+                            className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                              isCurrentSafe
+                                ? "bg-safe/20 text-safe"
+                                : "bg-danger/20 text-danger"
+                            }`}
+                          >
+                            {isCurrentSafe ? "Safe" : "Danger"}
+                          </span>
+                        </div>
+                      );
+                    })()}
+                  </div>
                 </div>
 
                 <motion.button
