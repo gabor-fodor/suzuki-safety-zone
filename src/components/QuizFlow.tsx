@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { quizQuestions } from "@/data/quizData";
 import { X, ArrowRight, CheckCircle2, XCircle, RotateCcw } from "lucide-react";
+import QuizScene from "./QuizScene";
 
 import quizImg1 from "@/assets/quiz-1-parking.jpg";
 import quizImg2 from "@/assets/quiz-2-phone.jpg";
