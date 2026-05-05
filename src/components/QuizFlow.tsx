@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { quizQuestions } from "@/data/quizData";
 import { X, ArrowRight, CheckCircle2, XCircle, RotateCcw } from "lucide-react";
+import QuizScene from "./QuizScene";
 
 import quizImg1 from "@/assets/quiz-1-parking.jpg";
 import quizImg2 from "@/assets/quiz-2-phone.jpg";
@@ -128,11 +129,16 @@ const QuizFlow = ({ onClose }: QuizFlowProps) => {
                 <h3 className="text-xl font-bold mb-2">{question.title}</h3>
                 <p className="text-muted-foreground text-sm mb-6 leading-relaxed">{question.description}</p>
 
-                <img
-                  src={quizImages[currentQ]}
-                  alt={question.title}
-                  className="w-full h-40 object-cover rounded-xl mb-6"
-                />
+                <div className="w-full h-44 rounded-xl mb-6 overflow-hidden bg-[#1a2942] border border-border">
+                  <QuizScene
+                    questionId={question.id}
+                    value={sliderValue}
+                    min={question.min}
+                    max={question.max}
+                    correctValue={question.correctValue}
+                    unit={question.unit}
+                  />
+                </div>
 
                 {/* Slider */}
                 <div className="mb-4">
