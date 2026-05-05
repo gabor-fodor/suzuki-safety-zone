@@ -11,333 +11,453 @@ interface Props {
 
 /**
  * Animated SVG scene that reacts to the slider value.
- * Each question shows a top-down / side schematic with a gap or distance
- * that grows/shrinks as the user drags the slider.
+ * Each scene uses a per-question pixels-per-meter scale so the visualised
+ * distance grows linearly and proportionally with the actual value.
  */
 const QuizScene = ({ questionId, value, min, max, correctValue }: Props) => {
-  const ratio = Math.min(1, Math.max(0, (value - min) / (max - min)));
-  const safeRatio = (correctValue - min) / (max - min);
-  const isSafe = value >= correctValue;
+  const W = 400;
+  const H = 170;
+
   const safeColor = "hsl(142,70%,45%)";
   const dangerColor = "hsl(0,72%,51%)";
+  const isSafe = value >= correctValue;
   const accent = isSafe ? safeColor : dangerColor;
 
-  // Common SVG viewbox
-  const W = 400;
-  const H = 160;
-
-  // Helper: a small stylised car (top-down)
-  const Car = ({ x, y, color = "#2E74B5", scale = 1, flip = false }: any) => (
-    <g transform={`translate(${x},${y}) scale(${scale}) ${flip ? "scale(-1,1)" : ""}`}>
-      <rect x={-22} y={-12} width={44} height={24} rx={5} fill={color} />
-      <rect x={-14} y={-9} width={12} height={18} rx={2} fill="#9ECEFF" opacity={0.8} />
-      <rect x={4} y={-9} width={10} height={18} rx={2} fill="#9ECEFF" opacity={0.6} />
-      <circle cx={-14} cy={-13} r={3} fill="#1a1a1a" />
-      <circle cx={14} cy={-13} r={3} fill="#1a1a1a" />
-      <circle cx={-14} cy={13} r={3} fill="#1a1a1a" />
-      <circle cx={14} cy={13} r={3} fill="#1a1a1a" />
-    </g>
-  );
-
-  const Road = () => (
+  // Reusable building blocks ------------------------------------------------
+  const Road = ({ dark = false }: { dark?: boolean }) => (
     <>
-      <rect x={0} y={0} width={W} height={H} fill="#1a2942" />
-      <rect x={0} y={H / 2 - 40} width={W} height={80} fill="#2a3a52" />
-      {/* dashed centerline */}
-      {[...Array(8)].map((_, i) => (
-        <rect key={i} x={i * 55 + 10} y={H / 2 - 1.5} width={28} height={3} fill="#fbbf24" opacity={0.6} />
+      <rect x={0} y={0} width={W} height={H} fill={dark ? "#0a1428" : "#1a2942"} />
+      <rect x={0} y={H / 2 - 38} width={W} height={76} fill={dark ? "#0f1d36" : "#2a3a52"} />
+      {[...Array(10)].map((_, i) => (
+        <rect
+          key={i}
+          x={i * 44 + 6}
+          y={H / 2 - 1.5}
+          width={22}
+          height={3}
+          fill="#fbbf24"
+          opacity={dark ? 0.35 : 0.55}
+        />
       ))}
     </>
   );
 
-  const DistanceLabel = ({ x, y, text }: any) => (
-    <g>
-      <rect x={x - 26} y={y - 10} width={52} height={20} rx={10} fill={accent} />
-      <text x={x} y={y + 4} textAnchor="middle" fontSize={11} fontWeight={700} fill="#fff">
-        {text}
-      </text>
+  // Side-view car
+  const CarSide = ({ x, y, color = "#2E74B5", flip = false, brake = false }: any) => (
+    <g transform={`translate(${x},${y}) ${flip ? "scale(-1,1)" : ""}`}>
+      {/* body */}
+      <path d="M -26 4 L -22 -6 L -8 -12 L 10 -12 L 22 -4 L 26 4 Z" fill={color} />
+      {/* windows */}
+      <path d="M -18 -5 L -8 -10 L 8 -10 L 18 -4 Z" fill="#9ECEFF" opacity={0.85} />
+      {/* wheels */}
+      <circle cx={-14} cy={6} r={5} fill="#1a1a1a" />
+      <circle cx={14} cy={6} r={5} fill="#1a1a1a" />
+      <circle cx={-14} cy={6} r={2} fill="#666" />
+      <circle cx={14} cy={6} r={2} fill="#666" />
+      {/* brake light */}
+      {brake && (
+        <motion.circle
+          cx={-26}
+          cy={-1}
+          r={3}
+          fill="#ff3b3b"
+          animate={{ opacity: [0.5, 1, 0.5] }}
+          transition={{ duration: 0.5, repeat: Infinity }}
+        />
+      )}
     </g>
   );
 
-  // Scene 1: Parking — door opens as ratio grows
+  // Top-down car
+  const CarTop = ({ x, y, color = "#2E74B5" }: any) => (
+    <g transform={`translate(${x},${y})`}>
+      <rect x={-22} y={-12} width={44} height={24} rx={5} fill={color} />
+      <rect x={-14} y={-9} width={12} height={18} rx={2} fill="#9ECEFF" opacity={0.85} />
+      <rect x={4} y={-9} width={10} height={18} rx={2} fill="#9ECEFF" opacity={0.6} />
+      <circle cx={-14} cy={-13} r={2.5} fill="#1a1a1a" />
+      <circle cx={14} cy={-13} r={2.5} fill="#1a1a1a" />
+      <circle cx={-14} cy={13} r={2.5} fill="#1a1a1a" />
+      <circle cx={14} cy={13} r={2.5} fill="#1a1a1a" />
+    </g>
+  );
+
+  const Cyclist = ({ x, y, scale = 1 }: any) => (
+    <g transform={`translate(${x},${y}) scale(${scale})`}>
+      <circle cx={0} cy={-14} r={5} fill="#ffd1a8" />
+      <rect x={-1} y={-9} width={2} height={4} fill="#ffd1a8" />
+      <path d="M -2 -5 L 0 4 L 2 -5 Z" fill="#fbbf24" />
+      <circle cx={-7} cy={6} r={6} fill="none" stroke="#fff" strokeWidth={1.5} />
+      <circle cx={7} cy={6} r={6} fill="none" stroke="#fff" strokeWidth={1.5} />
+    </g>
+  );
+
+  const Pedestrian = ({ x, y, color = "#ef4444" }: any) => (
+    <g transform={`translate(${x},${y})`}>
+      <circle cx={0} cy={-12} r={5} fill="#ffd1a8" />
+      <rect x={-3} y={-6} width={6} height={12} fill={color} />
+      <rect x={-3} y={6} width={2} height={6} fill="#1a2942" />
+      <rect x={1} y={6} width={2} height={6} fill="#1a2942" />
+    </g>
+  );
+
+  // Distance ruler with arrows
+  const Ruler = ({ x1, x2, y, label, color = accent }: any) => {
+    const cx = (x1 + x2) / 2;
+    return (
+      <g>
+        <line x1={x1} y1={y} x2={x2} y2={y} stroke={color} strokeWidth={2} />
+        <polygon points={`${x1},${y} ${x1 + 6},${y - 4} ${x1 + 6},${y + 4}`} fill={color} />
+        <polygon points={`${x2},${y} ${x2 - 6},${y - 4} ${x2 - 6},${y + 4}`} fill={color} />
+        <rect x={cx - 28} y={y - 22} width={56} height={18} rx={9} fill={color} />
+        <text x={cx} y={y - 9} textAnchor="middle" fontSize={11} fontWeight={700} fill="#fff">
+          {label}
+        </text>
+      </g>
+    );
+  };
+
+  // -----------------------------------------------------------------------
+  // Per-question scenes. Each defines a px-per-meter scale so the visual
+  // distance scales linearly with the slider value.
+  // -----------------------------------------------------------------------
+
+  // Q1 — Parked car door zone (top-down). Door opens to fixed posture; the
+  // distance between door tip and cyclist track shrinks/grows with value.
   if (questionId === 1) {
-    const doorAngle = 10 + ratio * 70; // 10° to 80°
-    const cyclistX = 150 + ratio * 150;
+    const pxPerM = 70; // 1m ≈ 70px (max 3m ≈ 210px)
+    const carCenterY = 50;
+    const doorTipY = carCenterY + 14 + 22; // door pivots down ~22px when fully open
+    const cyclistY = doorTipY + value * pxPerM;
+    const carX = 80;
     return (
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-full">
         <Road />
-        {/* parked car */}
-        <g transform={`translate(80, 60)`}>
+        {/* parked car (top-down) */}
+        <g transform={`translate(${carX},${carCenterY})`}>
           <rect x={-30} y={-18} width={60} height={36} rx={6} fill="#c0392b" />
-          <rect x={-20} y={-14} width={16} height={28} rx={2} fill="#9ECEFF" opacity={0.8} />
-          <rect x={6} y={-14} width={16} height={28} rx={2} fill="#9ECEFF" opacity={0.6} />
-          {/* opening door */}
+          <rect x={-22} y={-14} width={18} height={28} rx={2} fill="#9ECEFF" opacity={0.8} />
+          <rect x={4} y={-14} width={18} height={28} rx={2} fill="#9ECEFF" opacity={0.6} />
+          {/* opened door (fully open posture) */}
           <motion.g
-            style={{ transformOrigin: "-20px 14px" }}
-            animate={{ rotate: doorAngle }}
-            transition={{ type: "spring", stiffness: 80, damping: 12 }}
+            initial={{ rotate: 0 }}
+            animate={{ rotate: 75 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            style={{ transformOrigin: "-22px 14px" }}
           >
-            <rect x={-20} y={14} width={20} height={4} fill="#c0392b" stroke="#7a1f12" />
+            <rect x={-22} y={14} width={22} height={4} fill="#c0392b" stroke="#7a1f12" />
             <circle cx={0} cy={16} r={2} fill="#fff" />
           </motion.g>
         </g>
-        {/* cyclist passing */}
+        {/* cyclist track */}
         <motion.g
-          animate={{ x: cyclistX }}
-          transition={{ type: "spring", stiffness: 60, damping: 14 }}
+          animate={{ y: cyclistY }}
+          transition={{ type: "spring", stiffness: 90, damping: 16 }}
+          transform={`translate(${carX},0)`}
         >
-          <circle cx={0} cy={120} r={6} fill="#fbbf24" />
-          <rect x={-2} y={124} width={4} height={12} fill="#fbbf24" />
-          <circle cx={-6} cy={140} r={5} fill="none" stroke="#fff" strokeWidth={1.5} />
-          <circle cx={6} cy={140} r={5} fill="none" stroke="#fff" strokeWidth={1.5} />
+          <Cyclist x={0} y={0} scale={0.85} />
         </motion.g>
-        <DistanceLabel x={W / 2} y={H - 18} text={`${value.toFixed(1)} m`} />
+        {/* ruler from door tip to cyclist */}
+        <motion.g
+          animate={{ opacity: 1 }}
+        >
+          <line
+            x1={carX + 30}
+            y1={doorTipY}
+            x2={carX + 30}
+            y2={cyclistY - 14}
+            stroke={accent}
+            strokeWidth={2}
+            strokeDasharray="3 3"
+          />
+        </motion.g>
+        <g transform={`translate(${carX + 50}, ${(doorTipY + cyclistY) / 2})`}>
+          <rect x={-28} y={-10} width={56} height={20} rx={10} fill={accent} />
+          <text x={0} y={4} textAnchor="middle" fontSize={11} fontWeight={700} fill="#fff">
+            {value.toFixed(1)} m
+          </text>
+        </g>
       </svg>
     );
   }
 
-  // Scene 2: Phone — car moves, "blind" trail length = ratio
+  // Q2 — Phone distraction. "Blind" trail length scales with metres traveled.
   if (questionId === 2) {
-    const trailLen = 30 + ratio * 280;
+    const pxPerM = 11; // max 30m ≈ 330px
+    const startX = 30;
+    const trailLen = value * pxPerM;
+    const carX = startX + trailLen;
     return (
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-full">
         <Road />
-        {/* blind trail */}
-        <motion.rect
-          x={40}
-          y={H / 2 - 6}
-          height={12}
-          fill={accent}
-          opacity={0.4}
-          animate={{ width: trailLen }}
-          transition={{ type: "spring", stiffness: 70, damping: 15 }}
+        {/* dashed "blind" trail */}
+        <motion.line
+          x1={startX}
+          y1={H / 2}
+          x2={carX}
+          y2={H / 2}
+          stroke={accent}
+          strokeWidth={10}
+          strokeOpacity={0.35}
+          strokeDasharray="6 4"
+          animate={{ x2: carX }}
+          transition={{ type: "spring", stiffness: 80, damping: 16 }}
         />
-        <motion.g
-          animate={{ x: 40 + trailLen }}
-          transition={{ type: "spring", stiffness: 70, damping: 15 }}
-        >
-          <Car x={0} y={H / 2} />
-        </motion.g>
-        {/* phone icon */}
-        <g transform={`translate(60, ${H / 2})`}>
-          <rect x={-6} y={-10} width={12} height={20} rx={2} fill="#fff" />
-          <rect x={-4} y={-8} width={8} height={14} fill="#3b82f6" />
+        {/* phone icon at start */}
+        <g transform={`translate(${startX - 8}, ${H / 2 - 28})`}>
+          <rect x={-7} y={-11} width={14} height={22} rx={2} fill="#fff" />
+          <rect x={-5} y={-9} width={10} height={16} fill="#3b82f6" />
+          <circle cx={0} cy={9} r={1.2} fill="#1a2942" />
         </g>
-        <DistanceLabel x={W / 2} y={H - 14} text={`${value} m vakon`} />
+        {/* car at end of blind trail */}
+        <motion.g animate={{ x: carX }} transition={{ type: "spring", stiffness: 80, damping: 16 }}>
+          <CarSide x={0} y={H / 2} />
+        </motion.g>
+        <Ruler x1={startX} x2={Math.max(startX + 40, carX - 26)} y={H - 22} label={`${value} m`} />
       </svg>
     );
   }
 
-  // Scene 3: Cyclist overtake — side gap
+  // Q3 — Cyclist overtake side gap (top-down). Lateral gap scales with value.
   if (questionId === 3) {
-    const gap = 20 + ratio * 60; // px gap
+    const pxPerM = 32; // max 3m ≈ 96px
+    const cyclistY = H - 28;
+    const carY = cyclistY - 18 - value * pxPerM; // car shifts farther left of cyclist
+    const carX = 220;
     return (
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-full">
         <Road />
-        {/* cyclist on right */}
-        <g transform={`translate(${W - 60}, 110)`}>
-          <circle cx={0} cy={-10} r={6} fill="#fbbf24" />
-          <rect x={-2} y={-4} width={4} height={12} fill="#fbbf24" />
-          <circle cx={-6} cy={12} r={6} fill="none" stroke="#fff" strokeWidth={1.5} />
-          <circle cx={6} cy={12} r={6} fill="none" stroke="#fff" strokeWidth={1.5} />
-        </g>
-        {/* car overtaking, animated forward */}
+        {/* cyclist */}
+        <Cyclist x={carX} y={cyclistY} />
+        {/* car overtaking */}
         <motion.g
-          initial={{ x: -80 }}
-          animate={{ x: W - 60 - gap - 30 }}
-          transition={{ duration: 2.5, repeat: Infinity, repeatType: "loop", ease: "easeInOut" }}
+          animate={{ y: carY }}
+          transition={{ type: "spring", stiffness: 80, damping: 16 }}
         >
-          <Car x={0} y={110} color="#2E74B5" />
+          <CarTop x={carX} y={0} />
         </motion.g>
-        {/* gap indicator */}
-        <line x1={W - 60 - gap} y1={70} x2={W - 60} y2={70} stroke={accent} strokeWidth={2} />
-        <line x1={W - 60 - gap} y1={65} x2={W - 60 - gap} y2={75} stroke={accent} strokeWidth={2} />
-        <line x1={W - 60} y1={65} x2={W - 60} y2={75} stroke={accent} strokeWidth={2} />
-        <DistanceLabel x={W - 60 - gap / 2} y={50} text={`${value.toFixed(1)} m`} />
+        {/* lateral ruler */}
+        <line
+          x1={carX + 36}
+          y1={cyclistY - 18}
+          x2={carX + 36}
+          y2={carY + 12}
+          stroke={accent}
+          strokeWidth={2}
+          strokeDasharray="3 3"
+        />
+        <g transform={`translate(${carX + 70}, ${(cyclistY + carY) / 2})`}>
+          <rect x={-28} y={-10} width={56} height={20} rx={10} fill={accent} />
+          <text x={0} y={4} textAnchor="middle" fontSize={11} fontWeight={700} fill="#fff">
+            {value.toFixed(1)} m
+          </text>
+        </g>
       </svg>
     );
   }
 
-  // Scene 4: Braking on wet road
+  // Q4 — Wet braking distance. Skid length proportional to metres.
   if (questionId === 4) {
-    const brakeDist = 40 + ratio * 280;
+    const pxPerM = 1.7; // max 200m ≈ 340px
+    const startX = 24;
+    const skid = value * pxPerM;
+    const carX = startX + skid;
     return (
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-full">
         <Road />
-        {/* wet droplets */}
-        {[...Array(6)].map((_, i) => (
-          <motion.circle
+        {/* rain droplets */}
+        {[...Array(20)].map((_, i) => (
+          <motion.line
             key={i}
-            cx={30 + i * 60}
-            cy={H / 2 + 25}
-            r={2}
-            fill="#9ECEFF"
-            animate={{ opacity: [0.3, 0.9, 0.3] }}
-            transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.2 }}
+            x1={(i * 23) % W}
+            y1={-10}
+            x2={(i * 23) % W - 4}
+            y2={4}
+            stroke="#9ECEFF"
+            strokeWidth={1}
+            opacity={0.5}
+            animate={{ y1: [-10, H + 10], y2: [4, H + 24] }}
+            transition={{ duration: 0.8, repeat: Infinity, delay: (i % 7) * 0.1 }}
           />
         ))}
+        {/* wet sheen */}
+        <rect x={0} y={H / 2 - 38} width={W} height={76} fill="#9ECEFF" opacity={0.05} />
         {/* skid marks */}
         <motion.rect
-          x={20}
-          y={H / 2 - 10}
-          height={4}
+          x={startX}
+          y={H / 2 - 7}
+          height={3}
           fill="#000"
-          opacity={0.6}
-          animate={{ width: brakeDist }}
-          transition={{ type: "spring", stiffness: 60, damping: 15 }}
+          opacity={0.7}
+          animate={{ width: skid }}
+          transition={{ type: "spring", stiffness: 60, damping: 16 }}
         />
         <motion.rect
-          x={20}
-          y={H / 2 + 6}
-          height={4}
+          x={startX}
+          y={H / 2 + 4}
+          height={3}
           fill="#000"
-          opacity={0.6}
-          animate={{ width: brakeDist }}
-          transition={{ type: "spring", stiffness: 60, damping: 15 }}
+          opacity={0.7}
+          animate={{ width: skid }}
+          transition={{ type: "spring", stiffness: 60, damping: 16 }}
         />
+        {/* triggering hazard at start */}
+        <g transform={`translate(${startX}, ${H / 2 - 28})`}>
+          <polygon points="0,0 -8,14 8,14" fill="#fbbf24" />
+          <text x={0} y={12} textAnchor="middle" fontSize={10} fontWeight={800} fill="#1a2942">!</text>
+        </g>
         {/* car at end of skid */}
         <motion.g
-          animate={{ x: 20 + brakeDist }}
-          transition={{ type: "spring", stiffness: 60, damping: 15 }}
+          animate={{ x: carX }}
+          transition={{ type: "spring", stiffness: 60, damping: 16 }}
         >
-          <Car x={0} y={H / 2} color="#c0392b" />
-          {/* brake light glow */}
-          <motion.circle
-            cx={-22}
-            cy={H / 2}
-            r={6}
-            fill="#ff3b3b"
-            animate={{ opacity: [0.5, 1, 0.5] }}
-            transition={{ duration: 0.6, repeat: Infinity }}
-          />
+          <CarSide x={0} y={H / 2} color="#c0392b" brake />
         </motion.g>
-        <DistanceLabel x={W / 2} y={H - 14} text={`${value} m féktáv`} />
+        <Ruler x1={startX} x2={Math.max(startX + 40, carX - 26)} y={H - 22} label={`${value} m`} />
       </svg>
     );
   }
 
-  // Scene 5: School — distance to school sign
+  // Q5 — School zone. Distance from car to crossing child scales with value.
   if (questionId === 5) {
-    const dist = 30 + ratio * 280;
+    const pxPerM = 4.4; // max 80m ≈ 352px
+    const childX = W - 50;
+    const carX = childX - value * pxPerM - 30;
     return (
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-full">
         <Road />
-        {/* School building on right */}
-        <g transform={`translate(${W - 40}, 70)`}>
-          <rect x={-25} y={-30} width={50} height={50} fill="#fbbf24" />
-          <polygon points="-28,-30 0,-50 28,-30" fill="#dc2626" />
-          <text x={0} y={0} textAnchor="middle" fontSize={14} fontWeight={800} fill="#1a2942">
+        {/* school */}
+        <g transform={`translate(${W - 30}, ${H / 2 - 50})`}>
+          <rect x={-22} y={0} width={44} height={36} fill="#fbbf24" />
+          <polygon points="-26,0 0,-18 26,0" fill="#dc2626" />
+          <rect x={-6} y={18} width={12} height={18} fill="#7a3a12" />
+          <text x={0} y={-22} textAnchor="middle" fontSize={9} fontWeight={800} fill="#fbbf24">
             ISKOLA
           </text>
         </g>
+        {/* zebra crossing */}
+        {[...Array(5)].map((_, i) => (
+          <rect key={i} x={childX - 14} y={H / 2 - 30 + i * 14} width={28} height={6} fill="#fff" opacity={0.85} />
+        ))}
         {/* child crossing */}
         <motion.g
-          animate={{ y: [0, -4, 0] }}
+          animate={{ y: [-3, 3, -3] }}
           transition={{ duration: 0.8, repeat: Infinity }}
-          transform={`translate(${W - 80}, 110)`}
         >
-          <circle cx={0} cy={-8} r={5} fill="#ffd1a8" />
-          <rect x={-3} y={-2} width={6} height={10} fill="#ef4444" />
+          <Pedestrian x={childX} y={H / 2} />
         </motion.g>
-        {/* car approaching */}
+        {/* car approaching with brake light */}
         <motion.g
-          animate={{ x: W - 90 - dist }}
-          transition={{ type: "spring", stiffness: 60, damping: 15 }}
+          animate={{ x: carX }}
+          transition={{ type: "spring", stiffness: 70, damping: 16 }}
         >
-          <Car x={0} y={H / 2} color="#2E74B5" />
+          <CarSide x={0} y={H / 2} brake />
         </motion.g>
-        <DistanceLabel x={(W - 90 - dist + W - 90) / 2} y={H - 14} text={`${value} m`} />
+        <Ruler x1={Math.max(20, carX + 26)} x2={childX - 16} y={H - 18} label={`${value} m`} />
       </svg>
     );
   }
 
-  // Scene 6: Scooter follow distance
+  // Q6 — Following a scooter. Gap scales with value.
   if (questionId === 6) {
-    const gap = 30 + ratio * 220;
+    const pxPerM = 11; // max 30m ≈ 330px
+    const scooterX = W - 40;
+    const carX = scooterX - 18 - value * pxPerM - 26;
     return (
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-full">
         <Road />
-        {/* scooter ahead */}
-        <g transform={`translate(${W - 50}, ${H / 2})`}>
-          <rect x={-3} y={-10} width={6} height={4} fill="#fbbf24" />
-          <line x1={0} y1={-6} x2={0} y2={6} stroke="#fbbf24" strokeWidth={2} />
-          <circle cx={0} cy={8} r={5} fill="none" stroke="#fff" strokeWidth={1.5} />
-          <circle cx={0} cy={-12} r={4} fill="#ffd1a8" />
+        {/* scooter (side) */}
+        <g transform={`translate(${scooterX}, ${H / 2})`}>
+          <circle cx={-8} cy={6} r={5} fill="none" stroke="#fff" strokeWidth={1.5} />
+          <circle cx={8} cy={6} r={5} fill="none" stroke="#fff" strokeWidth={1.5} />
+          <rect x={-10} y={2} width={20} height={3} fill="#fbbf24" />
+          <line x1={6} y1={2} x2={10} y2={-12} stroke="#fbbf24" strokeWidth={2} />
+          <rect x={8} y={-14} width={6} height={3} fill="#fbbf24" />
+          {/* rider */}
+          <rect x={-3} y={-8} width={6} height={10} fill="#3b82f6" />
+          <circle cx={0} cy={-13} r={4} fill="#ffd1a8" />
         </g>
+        {/* car following */}
         <motion.g
-          animate={{ x: W - 50 - gap - 22 }}
-          transition={{ type: "spring", stiffness: 60, damping: 15 }}
+          animate={{ x: carX }}
+          transition={{ type: "spring", stiffness: 70, damping: 16 }}
         >
-          <Car x={0} y={H / 2} />
+          <CarSide x={0} y={H / 2} />
         </motion.g>
-        <DistanceLabel x={W - 50 - gap / 2} y={H - 14} text={`${value} m`} />
+        <Ruler x1={carX + 26} x2={scooterX - 18} y={H - 22} label={`${value} m`} />
       </svg>
     );
   }
 
-  // Scene 7: Traffic jam — car gap
+  // Q7 — Traffic jam. Bumper-to-bumper gap scales with value.
   if (questionId === 7) {
-    const gap = 10 + ratio * 100;
+    const pxPerM = 24; // max 8m ≈ 192px
+    const frontX = W - 50;
+    const carX = frontX - 26 - value * pxPerM - 26;
     return (
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-full">
         <Road />
-        <Car x={W - 60} y={H / 2} color="#c0392b" />
+        {/* leading car */}
+        <CarSide x={frontX} y={H / 2} color="#c0392b" brake />
+        {/* trailing car */}
         <motion.g
-          animate={{ x: W - 60 - gap - 44 }}
-          transition={{ type: "spring", stiffness: 80, damping: 14 }}
+          animate={{ x: carX }}
+          transition={{ type: "spring", stiffness: 90, damping: 16 }}
         >
-          <Car x={0} y={H / 2} color="#2E74B5" />
+          <CarSide x={0} y={H / 2} />
         </motion.g>
-        {/* small forward creep */}
-        <motion.text
-          x={20}
-          y={30}
-          fontSize={11}
-          fill="#9ECEFF"
-          animate={{ opacity: [0.3, 1, 0.3] }}
-          transition={{ duration: 2, repeat: Infinity }}
-        >
-          araszolás...
-        </motion.text>
-        <DistanceLabel x={W - 60 - gap / 2 - 20} y={H - 14} text={`${value.toFixed(1)} m`} />
+        {/* exhaust puffs */}
+        {[...Array(3)].map((_, i) => (
+          <motion.circle
+            key={i}
+            cx={frontX + 28 + i * 6}
+            cy={H / 2 + 4}
+            r={3 + i}
+            fill="#fff"
+            opacity={0.15}
+            animate={{ opacity: [0.25, 0, 0.25], cx: [frontX + 28, frontX + 50] }}
+            transition={{ duration: 1.4, repeat: Infinity, delay: i * 0.3 }}
+          />
+        ))}
+        <Ruler x1={carX + 26} x2={frontX - 26} y={H - 22} label={`${value.toFixed(1)} m`} />
       </svg>
     );
   }
 
-  // Scene 8: Night — headlight cone reach
+  // Q8 — Night visibility. Headlight cone reach scales with value.
   if (questionId === 8) {
-    const reach = 40 + ratio * 240;
+    const pxPerM = 4.4; // max 80m ≈ 352px
+    const carX = 40;
+    const reach = value * pxPerM;
+    const pedX = carX + 20 + reach;
     return (
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-full">
-        <rect x={0} y={0} width={W} height={H} fill="#0a1428" />
-        <rect x={0} y={H / 2 - 40} width={W} height={80} fill="#0f1d36" />
-        {[...Array(8)].map((_, i) => (
-          <rect key={i} x={i * 55 + 10} y={H / 2 - 1.5} width={28} height={3} fill="#fbbf24" opacity={0.4} />
-        ))}
-        {/* headlight cone */}
+        <Road dark />
+        {/* moon */}
+        <circle cx={W - 30} cy={20} r={10} fill="#f8fafc" opacity={0.85} />
+        <circle cx={W - 26} cy={18} r={9} fill="#0a1428" />
         <defs>
           <linearGradient id="cone" x1="0" x2="1" y1="0" y2="0">
-            <stop offset="0%" stopColor="#fff8b8" stopOpacity={0.7} />
+            <stop offset="0%" stopColor="#fff8b8" stopOpacity={0.75} />
             <stop offset="100%" stopColor="#fff8b8" stopOpacity={0} />
           </linearGradient>
         </defs>
+        {/* headlight cone */}
         <motion.polygon
           fill="url(#cone)"
           animate={{
-            points: `60,${H / 2 - 8} 60,${H / 2 + 8} ${60 + reach},${H / 2 + 40} ${60 + reach},${H / 2 - 40}`,
+            points: `${carX + 18},${H / 2 - 6} ${carX + 18},${H / 2 + 6} ${carX + 20 + reach},${H / 2 + 38} ${carX + 20 + reach},${H / 2 - 38}`,
           }}
-          transition={{ type: "spring", stiffness: 60, damping: 14 }}
+          transition={{ type: "spring", stiffness: 60, damping: 16 }}
         />
-        <Car x={40} y={H / 2} color="#2E74B5" />
-        {/* pedestrian at edge of light */}
+        <CarSide x={carX} y={H / 2} />
+        {/* pedestrian appearing at edge of light */}
         <motion.g
-          animate={{ x: 60 + reach + 10 }}
-          transition={{ type: "spring", stiffness: 60, damping: 14 }}
+          animate={{ x: pedX }}
+          transition={{ type: "spring", stiffness: 60, damping: 16 }}
         >
-          <circle cx={0} cy={H / 2 - 10} r={5} fill="#ffd1a8" />
-          <rect x={-3} y={H / 2 - 4} width={6} height={14} fill={accent} />
+          <Pedestrian x={0} y={H / 2} color={accent} />
         </motion.g>
-        <DistanceLabel x={W / 2} y={H - 14} text={`${value} m`} />
+        <Ruler x1={carX + 18} x2={pedX} y={H - 18} label={`${value} m`} />
       </svg>
     );
   }
