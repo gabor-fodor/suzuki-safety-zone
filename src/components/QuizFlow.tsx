@@ -128,11 +128,16 @@ const QuizFlow = ({ onClose }: QuizFlowProps) => {
                 <h3 className="text-xl font-bold mb-2">{question.title}</h3>
                 <p className="text-muted-foreground text-sm mb-6 leading-relaxed">{question.description}</p>
 
-                <img
-                  src={quizImages[currentQ]}
-                  alt={question.title}
-                  className="w-full h-40 object-cover rounded-xl mb-6"
-                />
+                <div className="w-full h-44 rounded-xl mb-6 overflow-hidden bg-[#1a2942] border border-border">
+                  <QuizScene
+                    questionId={question.id}
+                    value={sliderValue}
+                    min={question.min}
+                    max={question.max}
+                    correctValue={question.correctValue}
+                    unit={question.unit}
+                  />
+                </div>
 
                 {/* Slider */}
                 <div className="mb-4">
