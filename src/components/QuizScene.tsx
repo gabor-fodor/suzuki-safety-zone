@@ -132,16 +132,20 @@ const QuizScene = ({ questionId, value, min, max, correctValue }: Props) => {
 
   // Scene 3: Cyclist overtake — photo background + Suzuki car layer that slides horizontally.
   // Aspect ratio preserved from the example reference (1810x1352 ≈ 4:3).
-  // The car layer can only travel within the right 60% of the image — it never moves
-  // further right than 60% from the left edge.
+  // Both layers render at the same width as the background photo (object-contain on the
+  // car so it never gets stretched by object-cover).
+  // The car artwork in the SVG spans ~29%–99.6% of the SVG canvas width. Since the car
+  // layer is rendered at the same width as the background, at translate=0 the car's right
+  // edge sits at ~99.6% of the bg width. We clamp the car's right edge to ≤60% of bg
+  // width on every screen size by capping the rightmost translate at -40%.
   if (questionId === 3) {
-    // ratio 0 = unsafe (car at the rightmost allowed position, hugging cyclist)
-    // ratio 1 = safe (car pushed all the way left)
-    // Rightmost cap = +10% translate (keeps car within the 60% right-side band).
-    // Leftmost = -25% translate (well clear of the cyclist).
-    const maxRight = 10;
-    const maxLeft = -25;
-    const offsetPct = maxRight - ratio * (maxRight - maxLeft);
+    const CAR_RIGHT_IN_SVG = 0.996; // car artwork's right edge inside the SVG canvas (fraction)
+    const RIGHT_EDGE_CAP = 0.6;     // never let car's right edge exceed 60% of bg width
+    const SAFE_RIGHT_EDGE = 0.32;   // when fully safe, car's right edge sits at ~32% of bg width
+    const maxRightTranslate = (RIGHT_EDGE_CAP - CAR_RIGHT_IN_SVG) * 100; // ≈ -39.6
+    const maxLeftTranslate = (SAFE_RIGHT_EDGE - CAR_RIGHT_IN_SVG) * 100; // ≈ -67.6
+    // ratio 0 = unsafe (rightmost allowed) → ratio 1 = safe (pushed left)
+    const offsetPct = maxRightTranslate - ratio * (maxRightTranslate - maxLeftTranslate);
     return (
       <div className="relative w-full h-full flex items-center justify-center overflow-hidden">
         <div className="relative w-full max-h-full" style={{ aspectRatio: "1810 / 1352" }}>
