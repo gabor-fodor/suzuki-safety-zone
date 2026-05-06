@@ -7,7 +7,7 @@ interface HeroSectionProps {
 
 const HeroSection = ({ onStartQuiz }: HeroSectionProps) => {
   return (
-    <section className="relative min-h-[90vh] flex items-center justify-center px-4 overflow-hidden">
+    <section className="relative min-h-[100dvh] flex items-center justify-center px-4 py-10 overflow-hidden">
       {/* Background glow */}
       <div className="absolute inset-0 bg-gradient-to-b from-primary/20 via-background to-background" />
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[500px] h-[500px] rounded-full bg-primary/10 blur-[120px]" />

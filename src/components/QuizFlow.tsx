@@ -75,7 +75,7 @@ const QuizFlow = ({ onClose }: QuizFlowProps) => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 bg-background flex flex-col overflow-y-auto"
+      className="fixed inset-0 z-50 bg-background flex flex-col h-[100dvh] w-screen overflow-hidden"
     >
       {/* Header */}
       <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-md border-b border-border px-4 py-3 flex items-center justify-between">
@@ -98,7 +98,7 @@ const QuizFlow = ({ onClose }: QuizFlowProps) => {
       </div>
 
       {/* Content */}
-      <div className="flex-1 flex items-center justify-center p-4">
+      <div className="flex-1 flex items-center justify-center p-4 overflow-y-auto overscroll-contain">
         <AnimatePresence mode="wait">
           {phase === "intro" && (
             <motion.div key="intro" {...pageVariants} className="max-w-md w-full text-center">
