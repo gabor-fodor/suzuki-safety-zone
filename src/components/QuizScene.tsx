@@ -140,7 +140,7 @@ const QuizScene = ({ questionId, value, min, max, correctValue }: Props) => {
   // width on every screen size by capping the rightmost translate at -40%.
   if (questionId === 3) {
     const CAR_RIGHT_IN_SVG = 0.996; // car artwork's right edge inside the SVG canvas (fraction)
-    const RIGHT_EDGE_CAP = 0.8;     // car's right edge can extend up to 80% of bg width (60% + 20%)
+    const RIGHT_EDGE_CAP = 0.9;     // car's right edge can extend up to 90% of bg width
     const SAFE_RIGHT_EDGE = 0.32;   // when fully safe, car's right edge sits at ~32% of bg width
     const maxRightTranslate = (RIGHT_EDGE_CAP - CAR_RIGHT_IN_SVG) * 100; // ≈ -39.6
     const maxLeftTranslate = (SAFE_RIGHT_EDGE - CAR_RIGHT_IN_SVG) * 100; // ≈ -67.6
