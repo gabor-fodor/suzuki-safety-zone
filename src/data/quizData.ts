@@ -53,6 +53,7 @@ export const quizQuestions: QuizQuestion[] = [
     feedbackDanger: "1 másodperc = 14 méter vakon megtett út 50 km/h-nál. Ez 3–4 autóhossz – tedd le a telefont!",
   },
   {
+    id: 4,
     title: "Féktávolság nedves úton",
     description: "Mennyi féktávval kell számolni nedves aszfalton 90 km/h-nál?",
     unit: "m",
