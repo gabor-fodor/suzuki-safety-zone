@@ -130,39 +130,46 @@ const QuizScene = ({ questionId, value, min, max, correctValue }: Props) => {
     );
   }
 
-  // Scene 3: Cyclist overtake — photo background + Suzuki car layer that slides horizontally
+  // Scene 3: Cyclist overtake — photo background + Suzuki car layer that slides horizontally.
+  // Aspect ratio preserved from the example reference (1810x1352 ≈ 4:3).
+  // The car layer can only travel within the right 60% of the image — it never moves
+  // further right than 60% from the left edge.
   if (questionId === 3) {
-    // ratio 0 = unsafe (car hugs cyclist, shifted right) → ratio 1 = safe (car far left)
-    // Map slider to a horizontal offset in % of container width.
-    // At min distance: car nudged ~12% to the right (toward cyclist).
-    // At max distance: car pushed ~18% to the left (away from cyclist).
-    const offsetPct = 12 - ratio * 30;
+    // ratio 0 = unsafe (car at the rightmost allowed position, hugging cyclist)
+    // ratio 1 = safe (car pushed all the way left)
+    // Rightmost cap = +10% translate (keeps car within the 60% right-side band).
+    // Leftmost = -25% translate (well clear of the cyclist).
+    const maxRight = 10;
+    const maxLeft = -25;
+    const offsetPct = maxRight - ratio * (maxRight - maxLeft);
     return (
-      <div className="relative w-full h-full overflow-hidden">
-        {/* Background photo layer */}
-        <img
-          src={cyclistBg}
-          alt="Kerékpáros az úton"
-          className="absolute inset-0 w-full h-full object-cover"
-          draggable={false}
-        />
-        {/* Car layer — slides horizontally based on slider */}
-        <motion.img
-          src={cyclistCar}
-          alt="Suzuki autó"
-          className="absolute inset-0 w-full h-full object-cover pointer-events-none"
-          animate={{ x: `${offsetPct}%` }}
-          transition={{ type: "spring", stiffness: 90, damping: 18 }}
-          draggable={false}
-        />
-        {/* Distance label overlay */}
-        <div className="absolute bottom-2 left-1/2 -translate-x-1/2">
-          <span
-            className="px-3 py-1 rounded-full text-xs font-bold text-white shadow-lg"
-            style={{ backgroundColor: accent }}
-          >
-            {value.toFixed(1)} m oldaltávolság
-          </span>
+      <div className="relative w-full h-full flex items-center justify-center overflow-hidden">
+        <div className="relative w-full max-h-full" style={{ aspectRatio: "1810 / 1352" }}>
+          {/* Background photo layer */}
+          <img
+            src={cyclistBg}
+            alt="Kerékpáros az úton"
+            className="absolute inset-0 w-full h-full object-cover"
+            draggable={false}
+          />
+          {/* Car layer — same aspect ratio, scales together with the background */}
+          <motion.img
+            src={cyclistCar}
+            alt="Suzuki autó"
+            className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+            animate={{ x: `${offsetPct}%` }}
+            transition={{ type: "spring", stiffness: 90, damping: 18 }}
+            draggable={false}
+          />
+          {/* Distance label overlay */}
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2">
+            <span
+              className="px-3 py-1 rounded-full text-xs font-bold text-white shadow-lg"
+              style={{ backgroundColor: accent }}
+            >
+              {value.toFixed(1)} m oldaltávolság
+            </span>
+          </div>
         </div>
       </div>
     );
