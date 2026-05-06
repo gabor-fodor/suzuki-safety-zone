@@ -152,11 +152,13 @@ const QuizScene = ({ questionId, value, min, max, correctValue }: Props) => {
             className="absolute inset-0 w-full h-full object-cover"
             draggable={false}
           />
-          {/* Car layer — same aspect ratio, scales together with the background */}
+          {/* Car layer — uses object-contain so it scales to the SAME width as the
+              background photo (preserving the car SVG's native 1358x858 ratio).
+              Without this it would be stretched by object-cover and appear oversized. */}
           <motion.img
             src={cyclistCar}
             alt="Suzuki autó"
-            className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+            className="absolute inset-0 w-full h-full object-contain object-bottom pointer-events-none"
             animate={{ x: `${offsetPct}%` }}
             transition={{ type: "spring", stiffness: 90, damping: 18 }}
             draggable={false}
