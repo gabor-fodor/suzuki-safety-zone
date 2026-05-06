@@ -14,6 +14,19 @@ export interface QuizQuestion {
 
 export const quizQuestions: QuizQuestion[] = [
   {
+    id: 3,
+    title: "Kerékpáros előzése",
+    description: "Mekkora oldaltávolság biztonságos bringás előzésnél?",
+    unit: "m",
+    min: 0.3,
+    max: 3,
+    step: 0.1,
+    defaultValue: 0.5,
+    correctValue: 1.5,
+    feedbackSafe: "Szuper! 1–1,5 méter között van a biztonságos távolság, különösen nagyobb sebességnél az 1,5 méter az ideális.",
+    feedbackDanger: "A biztonságos előzési távolság 1–1,5 méter. Nagyobb sebességnél mindenképp az 1,5 méter a javasolt!",
+  },
+  {
     id: 1,
     title: "Parkoló autó ajtózónája",
     description: "Belvárosban parkoló autók mellett haladsz. Mekkora oldaltávolság szükséges, hogy egy hirtelen kinyíló ajtó ne okozzon balesetet?",
