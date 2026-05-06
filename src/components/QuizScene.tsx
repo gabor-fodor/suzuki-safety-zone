@@ -1,4 +1,6 @@
 import { motion } from "framer-motion";
+import cyclistBg from "@/assets/cyclist-bg.jpg";
+import cyclistCar from "@/assets/cyclist-car.svg";
 
 interface Props {
   questionId: number;
