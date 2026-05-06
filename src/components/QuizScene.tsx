@@ -130,35 +130,44 @@ const QuizScene = ({ questionId, value, min, max, correctValue }: Props) => {
     );
   }
 
-  // Scene 3: Cyclist overtake — side gap
+  // Scene 3: Cyclist overtake — photo background + Suzuki car layer that slides horizontally
   if (questionId === 3) {
-    const gap = 20 + ratio * 60; // px gap
+    // ratio 0 = unsafe (car hugs cyclist, shifted right) → ratio 1 = safe (car far left)
+    // Map slider to a horizontal offset in % of container width.
+    // At min distance: car nudged ~12% to the right (toward cyclist).
+    // At max distance: car pushed ~18% to the left (away from cyclist).
+    const offsetPct = 12 - ratio * 30;
     return (
-      <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-full">
-        <Road />
-        {/* cyclist on right */}
-        <g transform={`translate(${W - 60}, 110)`}>
-          <circle cx={0} cy={-10} r={6} fill="#fbbf24" />
-          <rect x={-2} y={-4} width={4} height={12} fill="#fbbf24" />
-          <circle cx={-6} cy={12} r={6} fill="none" stroke="#fff" strokeWidth={1.5} />
-          <circle cx={6} cy={12} r={6} fill="none" stroke="#fff" strokeWidth={1.5} />
-        </g>
-        {/* car overtaking, animated forward */}
-        <motion.g
-          initial={{ x: -80 }}
-          animate={{ x: W - 60 - gap - 30 }}
-          transition={{ duration: 2.5, repeat: Infinity, repeatType: "loop", ease: "easeInOut" }}
-        >
-          <Car x={0} y={110} color="#2E74B5" />
-        </motion.g>
-        {/* gap indicator */}
-        <line x1={W - 60 - gap} y1={70} x2={W - 60} y2={70} stroke={accent} strokeWidth={2} />
-        <line x1={W - 60 - gap} y1={65} x2={W - 60 - gap} y2={75} stroke={accent} strokeWidth={2} />
-        <line x1={W - 60} y1={65} x2={W - 60} y2={75} stroke={accent} strokeWidth={2} />
-        <DistanceLabel x={W - 60 - gap / 2} y={50} text={`${value.toFixed(1)} m`} />
-      </svg>
+      <div className="relative w-full h-full overflow-hidden">
+        {/* Background photo layer */}
+        <img
+          src={cyclistBg}
+          alt="Kerékpáros az úton"
+          className="absolute inset-0 w-full h-full object-cover"
+          draggable={false}
+        />
+        {/* Car layer — slides horizontally based on slider */}
+        <motion.img
+          src={cyclistCar}
+          alt="Suzuki autó"
+          className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+          animate={{ x: `${offsetPct}%` }}
+          transition={{ type: "spring", stiffness: 90, damping: 18 }}
+          draggable={false}
+        />
+        {/* Distance label overlay */}
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2">
+          <span
+            className="px-3 py-1 rounded-full text-xs font-bold text-white shadow-lg"
+            style={{ backgroundColor: accent }}
+          >
+            {value.toFixed(1)} m oldaltávolság
+          </span>
+        </div>
+      </div>
     );
   }
+
 
   // Scene 4: Braking on wet road
   if (questionId === 4) {
